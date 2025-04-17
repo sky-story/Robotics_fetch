@@ -1,0 +1,3 @@
+Symlinking /fetch_ws/devel/share/map_annotator/cmake/map_annotatorConfig-version.cmake
+Symlinking /fetch_ws/devel/share/map_annotator/cmake/map_annotatorConfig.cmake
+Symlinking /fetch_ws/devel/lib/pkgconfig/map_annotator.pc

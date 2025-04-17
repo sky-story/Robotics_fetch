@@ -1,0 +1,8 @@
+prefix=/fetch_ws/devel/.private/map_annotator
+
+Name: map_annotator
+Description: Description of map_annotator
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 
