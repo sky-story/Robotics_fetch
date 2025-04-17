@@ -1,0 +1,12 @@
+<launch>
+  <!-- 设置地图路径参数 -->
+  <arg name="map_file" default="/fetch_ws/src/fetch-picker/applications/maps/playground.yaml" />
+
+  <!-- 启动导航 -->
+  <include file="$(find fetch_navigation)/launch/fetch_nav.launch">
+    <arg name="map_file" value="$(arg map_file)" />
+  </include>
+
+  <!-- 启动 RViz -->
+  <node pkg="rviz" type="rviz" name="$(anon rviz)" args="-d $(find applications)/config/navigation.rviz" />
+</launch>
