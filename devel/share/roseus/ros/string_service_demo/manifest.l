@@ -1,0 +1,1 @@
+/fetch_ws/devel/.private/string_service_demo/share/roseus/ros/string_service_demo/manifest.l

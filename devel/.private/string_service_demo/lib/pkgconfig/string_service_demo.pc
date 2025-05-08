@@ -1,0 +1,8 @@
+prefix=/fetch_ws/devel/.private/string_service_demo
+
+Name: string_service_demo
+Description: Description of string_service_demo
+Version: 0.0.0
+Cflags: -I/fetch_ws/devel/.private/string_service_demo/include
+Libs: -L${prefix}/lib 
+Requires: 

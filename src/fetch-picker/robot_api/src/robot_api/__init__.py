@@ -5,3 +5,10 @@ from .head import Head
 from .arm import Arm
 from .arm_joints import ArmJoints
 
+from .moveit_goal_builder import MoveItGoalBuilder
+import actionlib
+from moveit_msgs.msg import MoveGroupAction
+
+
+
+
