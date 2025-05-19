@@ -24,52 +24,46 @@ TRAJECTORY_DURATION = 5.0  # seconds
 
 
 class Arm(object):
-    """Arm controls the robot's arm.
-
-    Joint space control:
-        joints = ArmJoints()
-        # Fill out joint states
-        arm = robot_api.Arm()
-        arm.move_to_joints(joints)
-    """
 
     def __init__(self):
-        # 创建 actionlib 客户端并等待连接
+        # 初始化轨迹控制器客户端
         self._client = actionlib.SimpleActionClient(ARM_ACTION_NAME, FollowJointTrajectoryAction)
-        rospy.loginfo("Waiting for arm action server...")
+        rospy.loginfo("等待机械臂action服务器...")
         self._client.wait_for_server()
-        rospy.loginfo("Arm action server connected.")
+        rospy.loginfo("机械臂action服务器已连接")
 
         # lab19:初始化 trajectory 和 move_group 的 action client
         self._move_group_client = actionlib.SimpleActionClient('move_group', MoveGroupAction)
-        rospy.loginfo('Waiting for move_group action server...')
+        rospy.loginfo('等待move_group action服务器...')
         self._move_group_client.wait_for_server()
-        rospy.loginfo('...connected to move_group server!')
+        rospy.loginfo('已连接到move_group服务器!')
 
 
         # lab20:初始化 IK 服务
         self._compute_ik = rospy.ServiceProxy('compute_ik', GetPositionIK)
 
     def move_to_joints(self, arm_joints):
-        """Moves the robot's arm to the given joints."""
-        # 创建一个轨迹点
+        """控制机械臂移动到指定的关节角度
+        
+        Args:
+            arm_joints: ArmJoints对象，包含目标关节角度
+        """
+        # 创建轨迹点
         point = JointTrajectoryPoint()
         point.positions = arm_joints.values()
         point.time_from_start = rospy.Duration(TRAJECTORY_DURATION)
 
-        # 创建轨迹并添加关节名和点
+        # 创建轨迹消息
         trajectory = JointTrajectory()
         trajectory.joint_names = ArmJoints.names()
         trajectory.points = [point]
 
-        # 创建目标并设置轨迹
+        # 创建并发送目标
         goal = FollowJointTrajectoryGoal()
         goal.trajectory = trajectory
-
-        # 发送目标并等待结果
         self._client.send_goal(goal)
         self._client.wait_for_result()
-        rospy.loginfo("Arm has reached the target position.")
+        rospy.loginfo("机械臂已到达目标位置")
 
     # Lab-19
     # def move_to_pose(self, pose_stamped):
@@ -95,29 +89,15 @@ class Arm(object):
                     replan_attempts=5,
                     tolerance=0.01,
                     orientation_constraint=None):
-        """Moves the end-effector to a pose, using motion planning.
-
-        Args:
-            pose_stamped: geometry_msgs/PoseStamped. The goal pose for the gripper.
-            allowed_planning_time: float. Max time to wait for planner (sec).
-            execution_timeout: float. Max time to wait for execution.
-            group_name: string. Joint group to use (arm / arm_with_torso).
-            num_planning_attempts: int. Number of times to try planning.
-            plan_only: bool. If True, only plan but do not move the arm.
-            replan: bool. If True, retry if execution fails.
-            replan_attempts: int. Max times to retry on failure.
-            tolerance: float. Goal tolerance (in meters).
-
-        Returns:
-            None if success; else a string error code.
-        """
-
+        # 创建规划目标
         goal_builder = MoveItGoalBuilder()
         goal_builder.set_pose_goal(pose_stamped)
 
+        # 添加姿态约束（如果有）
         if orientation_constraint is not None:
             goal_builder.add_path_orientation_constraint(orientation_constraint)  
 
+        # 设置规划参数
         goal_builder.allowed_planning_time = allowed_planning_time
         goal_builder.num_planning_attempts = num_planning_attempts
         goal_builder.plan_only = plan_only
@@ -126,11 +106,12 @@ class Arm(object):
         goal_builder.tolerance = tolerance
         goal_builder.group_name = group_name
 
+        # 构建并发送目标
         goal = goal_builder.build()
-
         self._move_group_client.send_goal(goal)
         finished = self._move_group_client.wait_for_result(rospy.Duration(execution_timeout))
 
+        # 处理执行结果
         if not finished:
             self._move_group_client.cancel_goal()
             return "TIMED_OUT"
@@ -143,7 +124,7 @@ class Arm(object):
 
     
     def cancel_all_goals(self):
-        self._client.cancel_all_goals()  # Lab 7 中用的 trajectory controller client
+        self._client.cancel_all_goals()  
         self._move_group_client.cancel_all_goals()
 
     def check_pose(self, 
@@ -151,6 +132,7 @@ class Arm(object):
                 allowed_planning_time=10.0,
                 group_name='arm',
                 tolerance=0.01):
+        
         error = self.move_to_pose(
             pose_stamped,
             allowed_planning_time=allowed_planning_time,
@@ -158,21 +140,25 @@ class Arm(object):
             tolerance=tolerance,
             plan_only=True)
         
-        # 如果没有错误，返回 True，表示可达；否则 False
         return error is None
 
 
     # lab20
     def compute_ik(self, pose_stamped, timeout=rospy.Duration(5)):
+
         request = GetPositionIKRequest()
         request.ik_request.pose_stamped = pose_stamped
         request.ik_request.group_name = 'arm'
         request.ik_request.timeout = timeout
         response = self._compute_ik(request)
+        
+        # 检查计算结果
         error_str = moveit_error_string(response.error_code.val)
         success = error_str == 'SUCCESS'
         if not success:
             return False
+            
+        # 输出关节角度
         joint_state = response.solution.joint_state
         for name, position in zip(joint_state.name, joint_state.position):
             if name in ArmJoints.names():
@@ -181,64 +167,35 @@ class Arm(object):
 
 # Lab-19
 def moveit_error_string(val):
-    """Returns a string associated with a MoveItErrorCode.
-        
-    Args:
-        val: The val field from moveit_msgs/MoveItErrorCodes.msg
-        
-    Returns: The string associated with the error value, 'UNKNOWN_ERROR_CODE'
-        if the value is invalid.
-    """ 
-    if val == MoveItErrorCodes.SUCCESS:
-        return 'SUCCESS'
-    elif val == MoveItErrorCodes.FAILURE:
-        return 'FAILURE'
-    elif val == MoveItErrorCodes.PLANNING_FAILED:
-        return 'PLANNING_FAILED'
-    elif val == MoveItErrorCodes.INVALID_MOTION_PLAN:
-        return 'INVALID_MOTION_PLAN'
-    elif val == MoveItErrorCodes.MOTION_PLAN_INVALIDATED_BY_ENVIRONMENT_CHANGE:
-        return 'MOTION_PLAN_INVALIDATED_BY_ENVIRONMENT_CHANGE'
-    elif val == MoveItErrorCodes.CONTROL_FAILED:
-        return 'CONTROL_FAILED'
-    elif val == MoveItErrorCodes.UNABLE_TO_AQUIRE_SENSOR_DATA:
-        return 'UNABLE_TO_AQUIRE_SENSOR_DATA'
-    elif val == MoveItErrorCodes.TIMED_OUT:
-        return 'TIMED_OUT'
-    elif val == MoveItErrorCodes.PREEMPTED:
-        return 'PREEMPTED'
-    elif val == MoveItErrorCodes.START_STATE_IN_COLLISION:
-        return 'START_STATE_IN_COLLISION'
-    elif val == MoveItErrorCodes.START_STATE_VIOLATES_PATH_CONSTRAINTS:
-        return 'START_STATE_VIOLATES_PATH_CONSTRAINTS'
-    elif val == MoveItErrorCodes.GOAL_IN_COLLISION:
-        return 'GOAL_IN_COLLISION'
-    elif val == MoveItErrorCodes.GOAL_VIOLATES_PATH_CONSTRAINTS:
-        return 'GOAL_VIOLATES_PATH_CONSTRAINTS'
-    elif val == MoveItErrorCodes.GOAL_CONSTRAINTS_VIOLATED:
-        return 'GOAL_CONSTRAINTS_VIOLATED'
-    elif val == MoveItErrorCodes.INVALID_GROUP_NAME:
-        return 'INVALID_GROUP_NAME'
-    elif val == MoveItErrorCodes.INVALID_GOAL_CONSTRAINTS:
-        return 'INVALID_GOAL_CONSTRAINTS'
-    elif val == MoveItErrorCodes.INVALID_ROBOT_STATE:
-        return 'INVALID_ROBOT_STATE'
-    elif val == MoveItErrorCodes.INVALID_LINK_NAME:
-        return 'INVALID_LINK_NAME'                                      
-    elif val == MoveItErrorCodes.INVALID_OBJECT_NAME:
-        return 'INVALID_OBJECT_NAME'
-    elif val == MoveItErrorCodes.FRAME_TRANSFORM_FAILURE:
-        return 'FRAME_TRANSFORM_FAILURE'
-    elif val == MoveItErrorCodes.COLLISION_CHECKING_UNAVAILABLE:
-        return 'COLLISION_CHECKING_UNAVAILABLE'
-    elif val == MoveItErrorCodes.ROBOT_STATE_STALE:
-        return 'ROBOT_STATE_STALE'
-    elif val == MoveItErrorCodes.SENSOR_INFO_STALE:
-        return 'SENSOR_INFO_STALE'
-    elif val == MoveItErrorCodes.NO_IK_SOLUTION:
-        return 'NO_IK_SOLUTION'
-    else:
-        return 'UNKNOWN_ERROR_CODE'
+    # 错误代码映射表
+    error_codes = {
+        MoveItErrorCodes.SUCCESS: 'SUCCESS',
+        MoveItErrorCodes.FAILURE: 'FAILURE',
+        MoveItErrorCodes.PLANNING_FAILED: 'PLANNING_FAILED',
+        MoveItErrorCodes.INVALID_MOTION_PLAN: 'INVALID_MOTION_PLAN',
+        MoveItErrorCodes.MOTION_PLAN_INVALIDATED_BY_ENVIRONMENT_CHANGE: 'MOTION_PLAN_INVALIDATED_BY_ENVIRONMENT_CHANGE',
+        MoveItErrorCodes.CONTROL_FAILED: 'CONTROL_FAILED',
+        MoveItErrorCodes.UNABLE_TO_AQUIRE_SENSOR_DATA: 'UNABLE_TO_AQUIRE_SENSOR_DATA',
+        MoveItErrorCodes.TIMED_OUT: 'TIMED_OUT',
+        MoveItErrorCodes.PREEMPTED: 'PREEMPTED',
+        MoveItErrorCodes.START_STATE_IN_COLLISION: 'START_STATE_IN_COLLISION',
+        MoveItErrorCodes.START_STATE_VIOLATES_PATH_CONSTRAINTS: 'START_STATE_VIOLATES_PATH_CONSTRAINTS',
+        MoveItErrorCodes.GOAL_IN_COLLISION: 'GOAL_IN_COLLISION',
+        MoveItErrorCodes.GOAL_VIOLATES_PATH_CONSTRAINTS: 'GOAL_VIOLATES_PATH_CONSTRAINTS',
+        MoveItErrorCodes.GOAL_CONSTRAINTS_VIOLATED: 'GOAL_CONSTRAINTS_VIOLATED',
+        MoveItErrorCodes.INVALID_GROUP_NAME: 'INVALID_GROUP_NAME',
+        MoveItErrorCodes.INVALID_GOAL_CONSTRAINTS: 'INVALID_GOAL_CONSTRAINTS',
+        MoveItErrorCodes.INVALID_ROBOT_STATE: 'INVALID_ROBOT_STATE',
+        MoveItErrorCodes.INVALID_LINK_NAME: 'INVALID_LINK_NAME',
+        MoveItErrorCodes.INVALID_OBJECT_NAME: 'INVALID_OBJECT_NAME',
+        MoveItErrorCodes.FRAME_TRANSFORM_FAILURE: 'FRAME_TRANSFORM_FAILURE',
+        MoveItErrorCodes.COLLISION_CHECKING_UNAVAILABLE: 'COLLISION_CHECKING_UNAVAILABLE',
+        MoveItErrorCodes.ROBOT_STATE_STALE: 'ROBOT_STATE_STALE',
+        MoveItErrorCodes.SENSOR_INFO_STALE: 'SENSOR_INFO_STALE',
+        MoveItErrorCodes.NO_IK_SOLUTION: 'NO_IK_SOLUTION'
+    }
+    
+    return error_codes.get(val, 'UNKNOWN_ERROR_CODE')
 
 
 

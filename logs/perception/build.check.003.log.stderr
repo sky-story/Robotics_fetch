@@ -1,0 +1,8 @@
+[31m[1mCMake Error[0m at /fetch_ws/src/fetch-picker/perception/CMakeLists.txt:107 (add_library):
+  add_library cannot create target "perception_crop" because another target
+  with the same name already exists.  The existing target is a shared library
+  created in source directory "/fetch_ws/src/fetch-picker/perception".  See
+  documentation for policy CMP0002 for more details.
+
+
+make: *** [Makefile:1544: cmake_check_build_system] Error 1

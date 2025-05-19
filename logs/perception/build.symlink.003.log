@@ -1,0 +1,7 @@
+Linked: (/fetch_ws/devel/.private/perception/share/perception/cmake/perceptionConfig.cmake, /fetch_ws/devel/share/perception/cmake/perceptionConfig.cmake)
+Linked: (/fetch_ws/devel/.private/perception/share/perception/cmake/perceptionConfig-version.cmake, /fetch_ws/devel/share/perception/cmake/perceptionConfig-version.cmake)
+Linked: (/fetch_ws/devel/.private/perception/lib/libperception_crop.so, /fetch_ws/devel/lib/libperception_crop.so)
+Linked: (/fetch_ws/devel/.private/perception/lib/perception/save_cloud, /fetch_ws/devel/lib/perception/save_cloud)
+Linked: (/fetch_ws/devel/.private/perception/lib/perception/point_cloud_demo, /fetch_ws/devel/lib/perception/point_cloud_demo)
+Linked: (/fetch_ws/devel/.private/perception/lib/pkgconfig/perception.pc, /fetch_ws/devel/lib/pkgconfig/perception.pc)
+Linked: (/fetch_ws/devel/.private/perception/lib/python3/dist-packages/perception/__init__.py, /fetch_ws/devel/lib/python3/dist-packages/perception/__init__.py)

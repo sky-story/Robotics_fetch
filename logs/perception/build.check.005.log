@@ -1,0 +1,29 @@
+[36m--[0m Using CATKIN_DEVEL_PREFIX: /fetch_ws/devel/.private/perception
+[36m--[0m Using CMAKE_PREFIX_PATH: /fetch_ws/devel;/opt/ros/noetic
+[36m--[0m This workspace overlays: /fetch_ws/devel;/opt/ros/noetic
+[36m--[0m Found PythonInterp: /usr/bin/python3 (found suitable version "3.8.10", minimum required is "3")
+[36m--[0m Using PYTHON_EXECUTABLE: /usr/bin/python3
+[36m--[0m Using Debian Python package layout
+[36m--[0m Using empy: /usr/lib/python3/dist-packages/em.py
+[36m--[0m Using CATKIN_ENABLE_TESTING: ON
+[36m--[0m Call enable_testing()
+[36m--[0m Using CATKIN_TEST_RESULTS_DIR: /fetch_ws/build/perception/test_results
+[36m--[0m Forcing gtest/gmock from source, though one was otherwise available.
+[36m--[0m Found gtest sources under '/usr/src/googletest': gtests will be built
+[36m--[0m Found gmock sources under '/usr/src/googletest': gmock will be built
+[36m--[0m Found PythonInterp: /usr/bin/python3 (found version "3.8.10")
+[36m--[0m Using Python nosetests: /usr/bin/nosetests3
+[36m--[0m catkin 0.8.10
+[36m--[0m BUILD_SHARED_LIBS is on
+[36m--[0m Using these message generators: gencpp;geneus;genlisp;gennodejs;genpy
+[31m[1mCMake Error[0m at /fetch_ws/src/fetch-picker/perception/CMakeLists.txt:107 (add_library):
+  add_library cannot create target "perception_crop" because another target
+  with the same name already exists.  The existing target is a shared library
+  created in source directory "/fetch_ws/src/fetch-picker/perception".  See
+  documentation for policy CMP0002 for more details.
+
+
+[36m--[0m Configuring incomplete, errors occurred!
+See also "/fetch_ws/build/perception/CMakeFiles/CMakeOutput.log".
+See also "/fetch_ws/build/perception/CMakeFiles/CMakeError.log".
+make: *** [Makefile:1544: cmake_check_build_system] Error 1
